@@ -1,0 +1,11 @@
+This folder contains the first four assignments for CSE130: Programming
+Languages, taken in Fall Quarter of 2014. The assignment specifications can be
+found at https://cseweb.ucsd.edu/classes/fa14/cse130-a. A short summary of each
+assignment follows:
+
+pa1: basic Ocaml list operations; iteration.
+pa2: tail recursion
+pa3: fold
+pa4: lexer and parser
+
+All code written is original.
