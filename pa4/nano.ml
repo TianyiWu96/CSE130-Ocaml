@@ -105,8 +105,65 @@ let listAssoc (k,l) =
 
 (*********************** Your code starts here ****************************)
 
-let lookup (x,evn) = failwith "to be written"
+let lookup (x,evn) = let temp = listAssoc (x, evn) in
+  match temp with
+    | None	-> raise (MLFailure("Variable not bound: " ^ x))
+    | Some x'	-> x'
 
-let rec eval (evn,e) = failwith "to be written"
+let rec eval (evn,e) = match e with
+  | Const c		-> Int c
+  | Var v		-> lookup (v, evn)
+  | True		-> Bool true
+  | False		-> Bool false
+  | App (f, n)		-> (let arg = eval(evn, n) in
+  			     (match eval(evn,f) with
+			      	| Closure(new_evn, None, x, e) -> eval((x,
+						arg)::new_evn@evn, e)
+				| Closure(new_evn, Some y, x, e) as f ->
+				eval((y, arg)::(x,f)::new_evn@evn, e)))
+  | Fun (f, n)		-> Closure(evn, None, f, n)
+  | If (e1, e2, e3)	-> (let x = eval(evn, e1) in
+  			     match x with
+			       | Bool b	-> if b then eval (evn, e2) else eval
+			       (evn, e3)
+			       | _	-> raise (MLFailure ("Invalid if
+						       statement")))
+  | Let (s, e2, e3)	-> (let new_evn = (s, eval(evn, e2))::evn in eval
+				(new_evn, e3))
+  | Letrec (s, e2, e3)	-> (let new_evn = (s, eval(evn, e2))::evn in eval
+				(new_evn, e3))
+(* we use the values to define which operators to check for, rather than the
+ other way around *)
+  | Bin(e1, op, e2)	-> (let x = eval(evn, e1) in
+  			   let y = eval(evn, e2) in
+			   match (x, y) with
+			     (* handle integer ops first *)
+			     | (Int i, Int j)	-> (match op with
+			       | Plus	-> Int (i+j)
+			       | Minus	-> Int (i-j)
+			       | Mul	-> Int (i*j)
+			       | Div	-> (match j with
+			         | 0	-> raise (MLFailure("Err: divide by 0"))
+				 | _	-> Int(i/j))
+			       | Lt	-> Bool (i<j)
+			       | Le	-> Bool (i<=j)
+			       | Eq	-> Bool (i=j)
+			       | Ne	-> Bool (i!=j)
+			       | _ 	-> raise (MLFailure("Err: invalid
+						       input")))
+			     | (Bool b1, Bool b2) -> (match op with
+			       | Or	-> Bool (b1||b2)
+			       | And	-> Bool (b1&&b2)
+			       | Eq	-> Bool (b1=b2)
+			       | Ne	-> Bool (b1!=b2)
+			       | _	-> raise (MLFailure("Err: invalid
+						       input")))
+			     | _	-> raise (MLFailure("Err: invalid
+					     input")))
+
+  | _			-> raise (MLFailure("invalid input"))
+
+
+
 
 (**********************     Testing Code  ******************************)
